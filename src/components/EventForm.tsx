@@ -24,17 +24,9 @@ import {
 } from '@/components/ui/select'
 import { VenueMultiInput } from './VenueMultiInput'
 import { useTransition } from 'react'
-import { Loader2, Sparkles } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { generateEventDescriptionAction, generateEventSuggestionsAction } from '@/lib/actions/ai'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 
 type EventFormProps = {
   defaultValues?: Partial<EventFormData>
@@ -50,88 +42,80 @@ const SPORTS = [
   'Tennis',
   'Volleyball',
   'Hockey',
-  'Pickleball',
   'Other',
 ]
 
 export function EventForm({ defaultValues, onSubmit, submitLabel = 'Create Event' }: EventFormProps) {
   const [isPending, startTransition] = useTransition()
-  const [isGenerating, setIsGenerating] = React.useState(false)
-  const [suggestionsOpen, setSuggestionsOpen] = React.useState(false)
-  const [suggestions, setSuggestions] = React.useState<string[]>([])
   const router = useRouter()
-  const form = useForm<EventFormData>({
-    resolver: zodResolver(eventSchema),
-    defaultValues: {
+  
+  // Convert ISO datetime to datetime-local format if present
+  // This ensures datetime-local inputs receive the correct format (YYYY-MM-DDTHH:mm)
+  // instead of ISO strings (YYYY-MM-DDTHH:mm:ssZ) which they cannot parse
+  const convertedDefaultValues = React.useMemo(() => {
+    const baseDefaults = {
       name: '',
       sport: '',
-      dateTime: defaultValues?.dateTime 
-        ? new Date(defaultValues.dateTime).toISOString().slice(0, 16)
-        : '',
+      dateTime: '',
       description: '',
-      location: '',
       venueNames: [],
+    }
+    
+    if (!defaultValues) {
+      return baseDefaults
+    }
+    
+    // Create a new object with all defaultValues, ensuring we don't mutate the original
+    const converted: Partial<EventFormData> = {
+      ...baseDefaults,
       ...defaultValues,
-    },
+    }
+    
+    // Convert ISO datetime string to datetime-local format (YYYY-MM-DDTHH:mm)
+    // This is critical because HTML datetime-local inputs cannot parse ISO strings with timezone
+    if (converted.dateTime && typeof converted.dateTime === 'string') {
+      try {
+        // Check if it's already in datetime-local format (no timezone, no seconds)
+        const isAlreadyLocalFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(converted.dateTime)
+        
+        if (!isAlreadyLocalFormat) {
+          // Parse the ISO string and convert to local time
+          const date = new Date(converted.dateTime)
+          
+          if (!isNaN(date.getTime())) {
+            // Format as YYYY-MM-DDTHH:mm (datetime-local format)
+            // Use local time components to ensure correct display in datetime-local input
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+            const hours = String(date.getHours()).padStart(2, '0')
+            const minutes = String(date.getMinutes()).padStart(2, '0')
+            
+            // Explicitly set the converted value - this will NOT be overridden
+            converted.dateTime = `${year}-${month}-${day}T${hours}:${minutes}`
+          } else {
+            // Invalid date, clear it
+            converted.dateTime = ''
+          }
+        }
+        // If already in correct format, keep it as-is
+      } catch (error) {
+        // If conversion fails, clear the value to avoid showing invalid data
+        console.error('Failed to convert datetime:', error)
+        converted.dateTime = ''
+      }
+    } else if (converted.dateTime === null || converted.dateTime === undefined) {
+      // Ensure empty string for null/undefined
+      converted.dateTime = ''
+    }
+    
+    return converted
+  }, [defaultValues])
+  
+  const form = useForm<EventFormData>({
+    resolver: zodResolver(eventSchema),
+    defaultValues: convertedDefaultValues,
   })
-
-  const handleGenerateDescription = async () => {
-    const eventName = form.getValues('name')
-    const sport = form.getValues('sport')
-    const location = form.getValues('location')
-
-    if (!eventName || !sport) {
-      toast.error('Please fill in event name and sport first')
-      return
-    }
-
-    setIsGenerating(true)
-    try {
-      const result = await generateEventDescriptionAction(eventName, sport, location)
-      if (result.ok && result.data) {
-        form.setValue('description', result.data)
-        toast.success('✨ AI description generated and added!', {
-          description: 'You can edit it if needed',
-        })
-      } else {
-        toast.error('error' in result ? result.error : 'Failed to generate description')
-      }
-    } catch (error) {
-      toast.error('Failed to generate description. Please check your API key.')
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  const handleGenerateSuggestions = async () => {
-    const sport = form.getValues('sport')
-    if (!sport) {
-      toast.error('Please select a sport first')
-      return
-    }
-
-    setIsGenerating(true)
-    try {
-      const result = await generateEventSuggestionsAction(sport)
-      if (result.ok && result.data && result.data.length > 0) {
-        setSuggestions(result.data)
-        setSuggestionsOpen(true)
-        toast.success('Suggestions generated!')
-      } else {
-        toast.error('error' in result ? result.error : 'Failed to generate suggestions')
-      }
-    } catch (error) {
-      toast.error('Failed to generate suggestions')
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  const handleSelectSuggestion = (suggestion: string) => {
-    form.setValue('name', suggestion)
-    setSuggestionsOpen(false)
-    toast.success('Event name selected!')
-  }
 
   const handleSubmit = (data: EventFormData) => {
     startTransition(async () => {
@@ -155,22 +139,7 @@ export function EventForm({ defaultValues, onSubmit, submitLabel = 'Create Event
           name="name"
           render={({ field }) => (
             <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Event Name</FormLabel>
-                {form.watch('sport') && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleGenerateSuggestions}
-                    disabled={isGenerating}
-                    className="h-7 text-xs"
-                  >
-                    <Sparkles className="mr-1 h-3 w-3" />
-                    {isGenerating ? 'Generating...' : 'AI Suggestions'}
-                  </Button>
-                )}
-              </div>
+              <FormLabel>Event Name</FormLabel>
               <FormControl>
                 <Input placeholder="Summer Basketball Championship" {...field} />
               </FormControl>
@@ -220,39 +189,10 @@ export function EventForm({ defaultValues, onSubmit, submitLabel = 'Create Event
 
         <FormField
           control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Location (Optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="City, State or Address" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="description"
           render={({ field }) => (
             <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Description (Optional)</FormLabel>
-                {form.watch('name') && form.watch('sport') && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleGenerateDescription}
-                    disabled={isGenerating}
-                    className="h-7 text-xs"
-                  >
-                    <Sparkles className="mr-1 h-3 w-3" />
-                    {isGenerating ? 'Generating...' : 'AI Generate'}
-                  </Button>
-                )}
-              </div>
+              <FormLabel>Description (Optional)</FormLabel>
               <FormControl>
                 <Input placeholder="Event description..." {...field} />
               </FormControl>
@@ -289,36 +229,6 @@ export function EventForm({ defaultValues, onSubmit, submitLabel = 'Create Event
           {submitLabel}
         </Button>
       </form>
-
-      <Dialog open={suggestionsOpen} onOpenChange={setSuggestionsOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              AI Event Name Suggestions
-            </DialogTitle>
-            <DialogDescription>
-              Click on a suggestion to use it as your event name
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 py-4">
-            {suggestions.map((suggestion, index) => (
-              <button
-                key={index}
-                onClick={() => handleSelectSuggestion(suggestion)}
-                className="w-full text-left p-3 rounded-lg border hover:bg-accent hover:border-primary transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    {index + 1}.
-                  </span>
-                  <span className="font-medium">{suggestion}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
     </Form>
   )
 }

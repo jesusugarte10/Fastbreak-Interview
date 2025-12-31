@@ -3,7 +3,7 @@ import { EventCard } from '@/components/EventCard'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Plus, Calendar, TrendingUp, Activity } from 'lucide-react'
+import { Plus, Calendar } from 'lucide-react'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { DashboardClient } from './DashboardClient'
@@ -28,26 +28,6 @@ const SPORTS = [
   'Other',
 ]
 
-function StatsSkeleton() {
-  return (
-    <div className="flex gap-3 flex-wrap">
-      {[...Array(3)].map((_, i) => (
-        <Card key={i} className="border-border flex-1 min-w-[120px]">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-9 w-14 rounded-lg flex-shrink-0" />
-              <div className="flex-1">
-                <Skeleton className="h-4 w-20 mb-2" />
-                <Skeleton className="h-8 w-12" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  )
-}
-
 function EventListSkeleton() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -59,73 +39,6 @@ function EventListSkeleton() {
           <Skeleton className="h-8 w-24" />
         </div>
       ))}
-    </div>
-  )
-}
-
-async function DashboardStats() {
-  const result = await listEventsAction()
-  
-  if (!result.ok) {
-    return null
-  }
-
-  const events = result.data || []
-  const now = new Date()
-  const upcomingEvents = events.filter(
-    (event) => new Date(event.startsAt) > now
-  )
-  const uniqueSports = new Set(events.map((e) => e.sport))
-
-  return (
-    <div className="flex gap-3 flex-wrap">
-      <Card className="border-border bg-card flex-1 min-w-[120px]">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-14 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Calendar className="h-5 w-5 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-muted-foreground mb-0.5">
-                Total Events
-              </p>
-              <p className="text-2xl font-bold text-foreground">{events.length}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-border bg-card flex-1 min-w-[120px]">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-14 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <TrendingUp className="h-5 w-5 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-muted-foreground mb-0.5">
-                Upcoming
-              </p>
-              <p className="text-2xl font-bold text-foreground">{upcomingEvents.length}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-border bg-card flex-1 min-w-[120px]">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-14 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Activity className="h-5 w-5 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-muted-foreground mb-0.5">
-                Sports Types
-              </p>
-              <p className="text-2xl font-bold text-foreground">{uniqueSports.size}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
@@ -211,7 +124,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             Manage your sports events and venues
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 ml-auto">
           <AIEventCreator />
           <Button asChild>
             <Link href="/events/new">
@@ -221,11 +134,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </Button>
         </div>
       </div>
-
-      {/* Compact stats */}
-      <Suspense fallback={<StatsSkeleton />}>
-        <DashboardStats />
-      </Suspense>
 
       {/* Search and Filter */}
       <DashboardClient initialSearch={search} initialSport={sport} sports={SPORTS} />

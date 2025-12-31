@@ -15,13 +15,13 @@ export function TopNav() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <nav className="sticky top-0 z-50 border-b border-border bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-cyan-500/10 backdrop-blur supports-[backdrop-filter]:bg-cyan-500/5">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold tracking-tight text-foreground">
+          <h1 className="text-xl font-bold tracking-tight text-cyan-400">
             Fastbreak
           </h1>
-          <span className="text-sm text-muted-foreground">Events</span>
+          <span className="text-sm text-cyan-300">Events</span>
         </div>
         <Button
           variant="outline"
