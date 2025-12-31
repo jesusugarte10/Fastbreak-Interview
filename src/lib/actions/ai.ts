@@ -26,7 +26,7 @@ export async function generateEventDescriptionAction(
     const prompt = `Generate a compelling, professional event description (2-3 sentences) for a ${sport} event called "${eventName}"${location ? ` in ${location}` : ''}. Make it exciting and engaging for potential attendees.`
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
@@ -80,7 +80,7 @@ export async function generateEventSuggestionsAction(sport: string) {
     const prompt = `Suggest 5 creative and engaging event name ideas for a ${sport} event. Return only the names, one per line, without numbers or bullets.`
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
@@ -218,7 +218,7 @@ ${conversationHistory}
 Extract the event details now (ONLY if it's a sports event request):`
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {

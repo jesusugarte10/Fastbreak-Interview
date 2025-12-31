@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/select'
 import { Search } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 
 type DashboardClientProps = {
   initialSearch?: string
@@ -22,18 +22,39 @@ export function DashboardClient({ initialSearch, initialSport, sports }: Dashboa
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
+  const [searchValue, setSearchValue] = useState(initialSearch || '')
+  const lastQueryRef = useRef<string | null>(null)
 
-  const handleSearch = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    if (value) {
-      params.set('search', value)
-    } else {
-      params.delete('search')
-    }
+  useEffect(() => {
+    // Sync when URL params change externally
+    setSearchValue(initialSearch || '')
+  }, [initialSearch])
+
+  const pushIfChanged = (params: URLSearchParams) => {
+    const query = params.toString()
+    // Avoid redundant navigations that can cause noticeable refreshes
+    if (lastQueryRef.current === query) return
+    lastQueryRef.current = query
     startTransition(() => {
-      router.push(`/dashboard?${params.toString()}`)
+      const url = query ? `/dashboard?${query}` : '/dashboard'
+      router.replace(url)
     })
   }
+
+  // Debounce search updates to avoid laggy typing and excessive navigations
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (searchValue) {
+        params.set('search', searchValue)
+      } else {
+        params.delete('search')
+      }
+      pushIfChanged(params)
+    }, 250)
+
+    return () => clearTimeout(handler)
+  }, [searchValue, searchParams])
 
   const handleSportChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -42,19 +63,17 @@ export function DashboardClient({ initialSearch, initialSport, sports }: Dashboa
     } else {
       params.delete('sport')
     }
-    startTransition(() => {
-      router.push(`/dashboard?${params.toString()}`)
-    })
+    pushIfChanged(params)
   }
 
   return (
-    <div className="flex gap-4 flex-col sm:flex-row">
-      <div className="relative flex-1">
+    <div className="flex gap-3 flex-col sm:flex-row">
+      <div className="relative flex-1 min-w-0">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search events..."
-          defaultValue={initialSearch}
-          onChange={(e) => handleSearch(e.target.value)}
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
           className="pl-9"
           disabled={isPending}
         />

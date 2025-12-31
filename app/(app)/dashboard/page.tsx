@@ -1,16 +1,9 @@
 import { listEventsAction } from '@/lib/actions/events'
 import { EventCard } from '@/components/EventCard'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Calendar, TrendingUp, Activity } from 'lucide-react'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { DashboardClient } from './DashboardClient'
@@ -35,17 +28,104 @@ const SPORTS = [
   'Other',
 ]
 
+function StatsSkeleton() {
+  return (
+    <div className="flex gap-3 flex-wrap">
+      {[...Array(3)].map((_, i) => (
+        <Card key={i} className="border-border flex-1 min-w-[120px]">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-9 w-14 rounded-lg flex-shrink-0" />
+              <div className="flex-1">
+                <Skeleton className="h-4 w-20 mb-2" />
+                <Skeleton className="h-8 w-12" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )
+}
+
 function EventListSkeleton() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {[...Array(6)].map((_, i) => (
-        <div key={i} className="rounded-xl border p-6">
+        <div key={i} className="rounded-xl border border-primary/10 bg-card/50 p-6">
           <Skeleton className="h-6 w-3/4 mb-4" />
           <Skeleton className="h-4 w-1/2 mb-2" />
           <Skeleton className="h-4 w-full mb-4" />
           <Skeleton className="h-8 w-24" />
         </div>
       ))}
+    </div>
+  )
+}
+
+async function DashboardStats() {
+  const result = await listEventsAction()
+  
+  if (!result.ok) {
+    return null
+  }
+
+  const events = result.data || []
+  const now = new Date()
+  const upcomingEvents = events.filter(
+    (event) => new Date(event.startsAt) > now
+  )
+  const uniqueSports = new Set(events.map((e) => e.sport))
+
+  return (
+    <div className="flex gap-3 flex-wrap">
+      <Card className="border-border bg-card flex-1 min-w-[120px]">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-14 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Calendar className="h-5 w-5 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-muted-foreground mb-0.5">
+                Total Events
+              </p>
+              <p className="text-2xl font-bold text-foreground">{events.length}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border bg-card flex-1 min-w-[120px]">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-14 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <TrendingUp className="h-5 w-5 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-muted-foreground mb-0.5">
+                Upcoming
+              </p>
+              <p className="text-2xl font-bold text-foreground">{upcomingEvents.length}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border bg-card flex-1 min-w-[120px]">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-14 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Activity className="h-5 w-5 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-muted-foreground mb-0.5">
+                Sports Types
+              </p>
+              <p className="text-2xl font-bold text-foreground">{uniqueSports.size}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
@@ -71,15 +151,28 @@ async function EventList({ search, sport }: { search?: string; sport?: string })
 
   if (events.length === 0) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground mb-4">No events found</p>
-        <Button asChild>
-          <Link href="/events/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Create your first event
-          </Link>
-        </Button>
-      </div>
+      <Card className="border-dashed border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+        <CardContent className="flex flex-col items-center justify-center py-16 px-6">
+          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <Calendar className="h-8 w-8 text-primary" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2">No events found</h3>
+          <p className="text-muted-foreground text-center mb-6 max-w-sm">
+            {search || sport
+              ? 'Try adjusting your search or filters'
+              : 'Get started by creating your first sports event'}
+          </p>
+          <div className="flex gap-3">
+            <AIEventCreator />
+            <Button asChild variant="outline">
+              <Link href="/events/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Create Event
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
@@ -108,9 +201,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Events Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Events Dashboard
+          </h1>
           <p className="text-muted-foreground mt-1">
             Manage your sports events and venues
           </p>
@@ -126,8 +222,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </div>
       </div>
 
+      {/* Compact stats */}
+      <Suspense fallback={<StatsSkeleton />}>
+        <DashboardStats />
+      </Suspense>
+
+      {/* Search and Filter */}
       <DashboardClient initialSearch={search} initialSport={sport} sports={SPORTS} />
 
+      {/* Events List */}
       <Suspense key={`${search}-${sport}`} fallback={<EventListSkeleton />}>
         <EventList search={search} sport={sport} />
       </Suspense>

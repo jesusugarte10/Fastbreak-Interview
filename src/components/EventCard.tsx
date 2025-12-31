@@ -24,58 +24,76 @@ type EventCardProps = {
 }
 
 export function EventCard({ id, name, sport, startsAt, description, location, venues }: EventCardProps) {
+  const isUpcoming = new Date(startsAt) > new Date()
+  
   return (
-    <Card className="hover:shadow-lg transition-shadow">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-xl">{name}</CardTitle>
-            <CardDescription className="flex items-center gap-2 mt-2">
-              <Calendar className="h-4 w-4" />
-              {format(new Date(startsAt), 'PPP p')}
+    <Card className="group hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 border-primary/10 hover:border-primary/30 bg-gradient-to-br from-card to-card/50">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-2 flex-1 min-w-0">
+            <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors line-clamp-2">
+              {name}
+            </CardTitle>
+            <CardDescription className="flex items-center gap-2 text-sm">
+              <Calendar className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate">{format(new Date(startsAt), 'PPP p')}</span>
             </CardDescription>
           </div>
-          <Badge variant="secondary" className="ml-2">
+          <Badge 
+            variant={isUpcoming ? "default" : "secondary"} 
+            className="ml-2 flex-shrink-0 font-semibold"
+          >
             {sport}
           </Badge>
         </div>
       </CardHeader>
-      {description && (
-        <CardContent>
-          <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
-        </CardContent>
-      )}
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 pb-3">
+        {description && (
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            {description}
+          </p>
+        )}
         {location && (
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">{location}</span>
+          <div className="flex items-start gap-2 pt-1">
+            <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+            <span className="text-sm text-foreground/80 line-clamp-1">{location}</span>
           </div>
         )}
-        <div className="flex items-center gap-2 flex-wrap">
-          <MapPin className="h-4 w-4 text-muted-foreground" />
-          {venues.length > 0 ? (
-            <div className="flex gap-2 flex-wrap">
+        {venues.length > 0 && (
+          <div className="flex items-start gap-2 pt-1">
+            <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <div className="flex gap-1.5 flex-wrap">
               {venues.map((venue) => (
-                <Badge key={venue.id} variant="outline" className="text-xs">
+                <Badge 
+                  key={venue.id} 
+                  variant="outline" 
+                  className="text-xs border-primary/20 hover:border-primary/40 transition-colors"
+                >
                   {venue.name}
                 </Badge>
               ))}
             </div>
-          ) : (
-            <span className="text-sm text-muted-foreground">No venues</span>
-          )}
-        </div>
+          </div>
+        )}
       </CardContent>
-      <CardFooter className="flex gap-2">
-        <Button asChild variant="outline" size="sm" className="flex-1">
+      <CardFooter className="flex gap-2 pt-4 border-t border-primary/10">
+        <Button 
+          asChild 
+          variant="outline" 
+          size="sm" 
+          className="flex-1 hover:bg-primary hover:text-primary-foreground transition-colors"
+        >
           <Link href={`/events/${id}/edit`}>
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </Link>
         </Button>
         <DeleteEventDialog eventId={id} eventName={name}>
-          <Button variant="destructive" size="sm" className="flex-1">
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            className="flex-1 hover:bg-destructive/90 transition-colors"
+          >
             <Trash2 className="mr-2 h-4 w-4" />
             Delete
           </Button>
