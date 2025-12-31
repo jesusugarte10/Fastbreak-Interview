@@ -1,6 +1,7 @@
 'use client'
 
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -10,7 +11,7 @@ import {
 } from '@/components/ui/select'
 import { Search, Calendar } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useTransition, useState, useEffect, useRef } from 'react'
+import { useTransition, useState } from 'react'
 
 type DashboardClientProps = {
   initialSearch?: string
@@ -37,63 +38,34 @@ export function DashboardClient({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [searchValue, setSearchValue] = useState(initialSearch || '')
-  const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Sync search value when URL changes (e.g., browser back/forward)
-  useEffect(() => {
-    setSearchValue(initialSearch || '')
-  }, [initialSearch])
-
-  // Debounced search - only update URL after user stops typing
-  useEffect(() => {
-    // Clear any existing timeout
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current)
+  // Execute search - called on button click or Enter key
+  const executeSearch = () => {
+    const params = new URLSearchParams(window.location.search)
+    const trimmedSearch = searchValue.trim()
+    
+    if (trimmedSearch) {
+      params.set('search', trimmedSearch)
+    } else {
+      params.delete('search')
     }
+    
+    startTransition(() => {
+      router.push(`/dashboard?${params.toString()}`)
+    })
+  }
 
-    // Set a new timeout to update the URL
-    debounceRef.current = setTimeout(() => {
-      // Use window.location.search to get fresh params at execution time
-      const params = new URLSearchParams(window.location.search)
-      const currentSearch = params.get('search') || ''
-      
-      // Trim the search value - whitespace-only should be treated as empty
-      const trimmedSearch = searchValue.trim()
-      
-      // Only update if the search value has actually changed from the URL
-      if (trimmedSearch !== currentSearch) {
-        if (trimmedSearch) {
-          params.set('search', trimmedSearch)
-        } else {
-          params.delete('search')
-        }
-        startTransition(() => {
-          // Use replace with scroll:false to avoid disrupting focus/keyboard on mobile
-          router.replace(`/dashboard?${params.toString()}`, { scroll: false })
-        })
-      }
-    }, 300) // 300ms debounce delay
-
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current)
-      }
+  // Handle Enter key in search input
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      executeSearch()
     }
-  }, [searchValue, router])
+  }
 
   const handleFilterChange = (key: string, value: string, defaultValue: string) => {
-    // Cancel any pending debounced search since we're navigating now
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current)
-      debounceRef.current = null
-    }
-    
-    // Use fresh URL params and merge with the current searchValue state
-    // This ensures unsaved search text isn't lost when changing filters
     const params = new URLSearchParams(window.location.search)
     
-    // Include the current searchValue (which may not be in the URL yet due to debounce)
-    // Trim whitespace - whitespace-only should be treated as empty
+    // Include current search value
     const trimmedSearch = searchValue.trim()
     if (trimmedSearch) {
       params.set('search', trimmedSearch)
@@ -109,22 +81,33 @@ export function DashboardClient({
     }
     
     startTransition(() => {
-      router.replace(`/dashboard?${params.toString()}`, { scroll: false })
+      router.push(`/dashboard?${params.toString()}`)
     })
   }
 
   return (
     <div className="flex gap-3 flex-col sm:flex-row sm:flex-wrap sm:items-center">
-      {/* Search */}
-      <div className="relative flex-1 min-w-[200px]">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search events..."
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
-          className="pl-9"
+      {/* Search with Button */}
+      <div className="flex flex-1 min-w-[200px] gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder="Search events..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="pl-9"
+            disabled={isPending}
+          />
+        </div>
+        <Button 
+          onClick={executeSearch} 
           disabled={isPending}
-        />
+          variant="secondary"
+          size="default"
+        >
+          Search
+        </Button>
       </div>
 
       {/* Sport Filter */}

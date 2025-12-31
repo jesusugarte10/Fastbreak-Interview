@@ -128,7 +128,13 @@ class TestEndToEndWorkflows:
             EC.presence_of_element_located((By.CSS_SELECTOR, "input[type='text'], input[placeholder*='earch']"))
         )
         search_input.send_keys("test")
-        time.sleep(2)  # Wait for debounce
+        
+        # Click the Search button (button-based search)
+        search_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Search')]"))
+        )
+        search_button.click()
+        time.sleep(1)  # Wait for navigation
         
         # Verify URL contains search parameter
         assert "search=" in driver.current_url.lower()
