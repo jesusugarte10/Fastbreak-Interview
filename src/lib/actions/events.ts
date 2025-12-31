@@ -20,6 +20,7 @@ export async function listEventsAction(search?: string, sport?: string) {
         sport,
         starts_at,
         description,
+        location,
         created_at,
         event_venues (
           venue:venues (
@@ -41,7 +42,11 @@ export async function listEventsAction(search?: string, sport?: string) {
 
     const { data, error } = await query
 
-    if (error) throw error
+    if (error) {
+      // Provide more context for Supabase errors
+      const errorMessage = error.message || error.details || 'Database query failed'
+      throw new Error(`Failed to fetch events: ${errorMessage}`)
+    }
 
     return data.map((event) => ({
       id: event.id,
@@ -49,6 +54,7 @@ export async function listEventsAction(search?: string, sport?: string) {
       sport: event.sport,
       startsAt: event.starts_at,
       description: event.description,
+      location: event.location,
       createdAt: event.created_at,
       venues: (event.event_venues as any[])?.map((ev) => ev.venue) || [],
     }))
@@ -72,6 +78,7 @@ export async function createEventAction(formData: EventFormData) {
         sport: validated.sport,
         starts_at: validated.dateTime,
         description: validated.description || null,
+        location: validated.location || null,
       })
       .select()
       .single()
@@ -151,6 +158,7 @@ export async function updateEventAction(id: string, formData: EventFormData) {
         sport: validated.sport,
         starts_at: validated.dateTime,
         description: validated.description || null,
+        location: validated.location || null,
       })
       .eq('id', id)
 
@@ -260,6 +268,7 @@ export async function getEventAction(id: string) {
         sport,
         starts_at,
         description,
+        location,
         event_venues (
           venue:venues (
             id,
@@ -280,6 +289,7 @@ export async function getEventAction(id: string) {
       sport: data.sport,
       dateTime: data.starts_at,
       description: data.description || '',
+      location: data.location || '',
       venueNames: (data.event_venues as any[])?.map((ev) => ev.venue.name) || [],
     }
   })

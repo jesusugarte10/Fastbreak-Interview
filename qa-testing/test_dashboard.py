@@ -4,54 +4,11 @@ Tests dashboard functionality, search, filter, and CRUD operations
 """
 
 import pytest
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 import time
-
-
-@pytest.fixture(scope="function")
-def driver():
-    """Setup and teardown driver for each test"""
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()), options=options
-    )
-    driver.implicitly_wait(10)
-    yield driver
-    driver.quit()
-
-
-@pytest.fixture
-def base_url():
-    """Base URL for the application"""
-    return "http://localhost:3000"
-
-
-@pytest.fixture
-def authenticated_session(driver, base_url):
-    """
-    Create an authenticated session
-    Note: This requires valid credentials in environment variables
-    or test user setup
-    """
-    # This is a placeholder - in real tests, you'd need to:
-    # 1. Sign up a test user
-    # 2. Or use existing test credentials
-    # 3. Or use session cookies/tokens
-    
-    driver.get(f"{base_url}/login")
-    # Add authentication logic here
-    # For now, we'll skip authenticated tests if not logged in
-    yield driver
 
 
 class TestDashboard:
@@ -66,11 +23,9 @@ class TestDashboard:
             EC.url_contains("/login")
         )
 
-    def test_dashboard_elements_present(self, driver, base_url, authenticated_session):
+    def test_dashboard_elements_present(self, authenticated_driver, base_url):
         """Test that dashboard elements are present when authenticated"""
-        if not authenticated_session:
-            pytest.skip("Authentication required")
-        
+        driver = authenticated_driver
         driver.get(f"{base_url}/dashboard")
         
         # Check for key elements
@@ -90,11 +45,9 @@ class TestDashboard:
         new_event_button = driver.find_element(By.XPATH, "//button[contains(text(), 'New Event')]")
         assert new_event_button.is_displayed()
 
-    def test_search_functionality(self, driver, base_url, authenticated_session):
+    def test_search_functionality(self, authenticated_driver, base_url):
         """Test search functionality on dashboard"""
-        if not authenticated_session:
-            pytest.skip("Authentication required")
-        
+        driver = authenticated_driver
         driver.get(f"{base_url}/dashboard")
         
         # Wait for search input
@@ -113,11 +66,9 @@ class TestDashboard:
         # Verify URL contains search parameter
         assert "search=" in driver.current_url.lower()
 
-    def test_filter_by_sport(self, driver, base_url, authenticated_session):
+    def test_filter_by_sport(self, authenticated_driver, base_url):
         """Test filtering events by sport"""
-        if not authenticated_session:
-            pytest.skip("Authentication required")
-        
+        driver = authenticated_driver
         driver.get(f"{base_url}/dashboard")
         
         # Find and click the sport filter
@@ -143,11 +94,9 @@ class TestDashboard:
 class TestEventCRUD:
     """Test suite for Event CRUD operations"""
 
-    def test_create_event_page_loads(self, driver, base_url, authenticated_session):
+    def test_create_event_page_loads(self, authenticated_driver, base_url):
         """Test that create event page loads correctly"""
-        if not authenticated_session:
-            pytest.skip("Authentication required")
-        
+        driver = authenticated_driver
         driver.get(f"{base_url}/events/new")
         
         # Check for key elements
@@ -160,11 +109,9 @@ class TestEventCRUD:
         assert driver.find_element(By.CSS_SELECTOR, "input[type='datetime-local']")
         assert driver.find_element(By.XPATH, "//button[contains(text(), 'Create Event')]")
 
-    def test_event_form_validation(self, driver, base_url, authenticated_session):
+    def test_event_form_validation(self, authenticated_driver, base_url):
         """Test event form validation"""
-        if not authenticated_session:
-            pytest.skip("Authentication required")
-        
+        driver = authenticated_driver
         driver.get(f"{base_url}/events/new")
         
         # Try to submit empty form
@@ -179,11 +126,9 @@ class TestEventCRUD:
         error_elements = driver.find_elements(By.CSS_SELECTOR, "[class*='error'], [class*='destructive']")
         assert len(error_elements) > 0 or "required" in driver.page_source.lower()
 
-    def test_venue_multi_input(self, driver, base_url, authenticated_session):
+    def test_venue_multi_input(self, authenticated_driver, base_url):
         """Test venue multi-input functionality"""
-        if not authenticated_session:
-            pytest.skip("Authentication required")
-        
+        driver = authenticated_driver
         driver.get(f"{base_url}/events/new")
         
         # Find venue input (this might need adjustment based on actual implementation)

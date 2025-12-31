@@ -4,80 +4,103 @@ End-to-end workflow tests
 """
 
 import pytest
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 import time
-
-
-@pytest.fixture(scope="function")
-def driver():
-    """Setup and teardown driver for each test"""
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()), options=options
-    )
-    driver.implicitly_wait(10)
-    yield driver
-    driver.quit()
-
-
-@pytest.fixture
-def base_url():
-    """Base URL for the application"""
-    return "http://localhost:3000"
 
 
 class TestEndToEndWorkflows:
     """End-to-end workflow tests"""
 
-    def test_complete_event_lifecycle(self, driver, base_url):
+    def test_complete_event_lifecycle(self, authenticated_driver, base_url):
         """
         Test complete event lifecycle:
-        1. Navigate to dashboard (should redirect if not authenticated)
-        2. Create event
-        3. View event in dashboard
-        4. Edit event
-        5. Delete event
+        1. Create event
+        2. View event in dashboard
+        3. Edit event
+        4. Delete event
         """
-        # This is a template - requires authentication setup
-        driver.get(f"{base_url}/dashboard")
+        driver = authenticated_driver
+        driver.get(f"{base_url}/events/new")
         
-        # Check if redirected to login
-        if "/login" in driver.current_url:
-            pytest.skip("Authentication required for full E2E test")
+        # Fill in event form
+        name_input = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, "name"))
+        )
+        name_input.send_keys("Selenium Test Event")
         
-        # Continue with authenticated flow...
-        # This would require setting up test user authentication first
+        # Select sport
+        sport_select = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "button[role='combobox']"))
+        )
+        sport_select.click()
+        time.sleep(0.5)
+        
+        basketball_option = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'Basketball')]"))
+        )
+        basketball_option.click()
+        
+        # Fill in date (tomorrow)
+        from datetime import datetime, timedelta
+        tomorrow = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%dT14:00")
+        date_input = driver.find_element(By.CSS_SELECTOR, "input[type='datetime-local']")
+        date_input.send_keys(tomorrow)
+        
+        # Add venue
+        venue_input = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "input[placeholder*='venue']"))
+        )
+        venue_input.send_keys("Test Venue")
+        venue_input.send_keys(Keys.RETURN)
+        time.sleep(1)
+        
+        # Submit form
+        submit_button = driver.find_element(By.XPATH, "//button[@type='submit']")
+        submit_button.click()
+        
+        # Wait for redirect to dashboard
+        WebDriverWait(driver, 15).until(
+            EC.url_contains("/dashboard")
+        )
+        
+        # Verify event appears in dashboard
+        time.sleep(2)
+        assert "Selenium Test Event" in driver.page_source
 
-    def test_search_and_filter_workflow(self, driver, base_url):
+    def test_search_and_filter_workflow(self, authenticated_driver, base_url):
         """Test search and filter workflow"""
+        driver = authenticated_driver
         driver.get(f"{base_url}/dashboard")
-        
-        if "/login" in driver.current_url:
-            pytest.skip("Authentication required")
         
         # Test search
         search_input = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "input[placeholder*='Search']"))
+            EC.presence_of_element_located((By.CSS_SELECTOR, "input[placeholder*='Search events']"))
         )
         search_input.send_keys("test")
         time.sleep(2)
         
+        # Verify URL contains search parameter
+        assert "search=" in driver.current_url.lower()
+        
         # Test filter
-        filter_button = driver.find_element(By.CSS_SELECTOR, "button[role='combobox']")
+        filter_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "button[role='combobox']"))
+        )
         filter_button.click()
         time.sleep(1)
         
-        # Verify URL parameters are set
-        assert "search=" in driver.current_url or "sport=" in driver.current_url
+        # Select a sport
+        sport_option = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'Basketball')]"))
+        )
+        sport_option.click()
+        time.sleep(2)
+        
+        # Verify URL contains sport filter
+        assert "sport=" in driver.current_url.lower()
 
     def test_responsive_design(self, driver, base_url):
         """Test responsive design at different viewport sizes"""

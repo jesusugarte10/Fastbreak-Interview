@@ -14,6 +14,7 @@ import { Plus, Search } from 'lucide-react'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { DashboardClient } from './DashboardClient'
+import { AIEventCreator } from '@/components/AIEventCreator'
 
 type DashboardPageProps = {
   searchParams: Promise<{
@@ -30,6 +31,7 @@ const SPORTS = [
   'Tennis',
   'Volleyball',
   'Hockey',
+  'Pickleball',
   'Other',
 ]
 
@@ -53,8 +55,14 @@ async function EventList({ search, sport }: { search?: string; sport?: string })
 
   if (!result.ok) {
     return (
-      <div className="text-center py-12">
-        <p className="text-destructive">{result.error}</p>
+      <div className="text-center py-12 space-y-4">
+        <p className="text-destructive font-medium">{result.error}</p>
+        {result.error?.includes('Database tables not found') && (
+          <p className="text-sm text-muted-foreground">
+            Go to your Supabase dashboard → SQL Editor and run the schema from{' '}
+            <code className="text-xs bg-muted px-2 py-1 rounded">supabase/schema.sql</code>
+          </p>
+        )}
       </div>
     )
   }
@@ -85,6 +93,7 @@ async function EventList({ search, sport }: { search?: string; sport?: string })
           sport={event.sport}
           startsAt={event.startsAt}
           description={event.description}
+          location={event.location}
           venues={event.venues}
         />
       ))}
@@ -106,12 +115,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             Manage your sports events and venues
           </p>
         </div>
-        <Button asChild>
-          <Link href="/events/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New Event
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <AIEventCreator />
+          <Button asChild>
+            <Link href="/events/new">
+              <Plus className="mr-2 h-4 w-4" />
+              New Event
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <DashboardClient initialSearch={search} initialSport={sport} sports={SPORTS} />

@@ -24,10 +24,11 @@ export function TopNav() {
           <span className="text-sm text-muted-foreground">Events</span>
         </div>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={handleSignOut}
           disabled={isPending}
+          className="text-foreground"
         >
           <LogOut className="mr-2 h-4 w-4" />
           {isPending ? 'Signing out...' : 'Sign Out'}

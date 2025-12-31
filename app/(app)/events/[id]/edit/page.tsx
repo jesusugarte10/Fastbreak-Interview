@@ -55,6 +55,7 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
               sport: event.sport,
               dateTime: event.dateTime,
               description: event.description,
+              location: event.location,
               venueNames: event.venueNames,
             }}
             onSubmit={handleSubmit}

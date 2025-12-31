@@ -16,6 +16,10 @@ CREATE TABLE IF NOT EXISTS events (
   sport TEXT NOT NULL,
   starts_at TIMESTAMPTZ NOT NULL,
   description TEXT,
+  location TEXT,
+  is_recurring BOOLEAN DEFAULT FALSE,
+  recurrence_pattern TEXT,
+  parent_event_id UUID REFERENCES events(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

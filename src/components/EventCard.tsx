@@ -19,10 +19,11 @@ type EventCardProps = {
   sport: string
   startsAt: string
   description?: string | null
+  location?: string | null
   venues: Venue[]
 }
 
-export function EventCard({ id, name, sport, startsAt, description, venues }: EventCardProps) {
+export function EventCard({ id, name, sport, startsAt, description, location, venues }: EventCardProps) {
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader>
@@ -44,7 +45,13 @@ export function EventCard({ id, name, sport, startsAt, description, venues }: Ev
           <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
         </CardContent>
       )}
-      <CardContent>
+      <CardContent className="space-y-3">
+        {location && (
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">{location}</span>
+          </div>
+        )}
         <div className="flex items-center gap-2 flex-wrap">
           <MapPin className="h-4 w-4 text-muted-foreground" />
           {venues.length > 0 ? (
