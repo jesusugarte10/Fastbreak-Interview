@@ -158,13 +158,28 @@ HEADLESS=false pytest -v
 - ✅ Search and filter workflow
 - ✅ Responsive design testing
 
+### test_comprehensive.py (NEW - Recommended!)
+**Comprehensive test suite covering all basic functionality:**
+- ✅ Complete signup flow
+- ✅ Complete login flow
+- ✅ Create event with all fields (name, sport, date, description, location, venues)
+- ✅ Edit existing event
+- ✅ Delete event
+- ✅ AI event creator button and dialog
+- ✅ Dashboard navigation
+- ✅ Sign out functionality
+
+**This is the recommended test suite to run for full coverage!**
+
 ## Notes
 
-- Tests run in headless mode by default (set `HEADLESS=false` in `.env` to see browser)
+- **Tests run with VISIBLE browser by default** - You can watch tests execute in real-time!
+- To run in headless mode: Set `HEADLESS=true` in `.env` or use `HEADLESS=true ./run_tests.sh`
 - Authenticated tests require test user credentials in `.env`
 - Tests use implicit waits (10s) and explicit waits for better reliability
 - ChromeDriver is automatically managed by webdriver-manager
 - Test reports are saved to `reports/report.html`
+- Comprehensive test suite includes visual pauses so you can see each step
 
 ## Configuration
 

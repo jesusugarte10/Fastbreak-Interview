@@ -75,21 +75,22 @@ export function EventForm({ defaultValues, onSubmit, submitLabel = 'Create Event
     }
   }, [defaultValues])
   
-  const form = useForm<EventFormData>({
+  // Type assertion needed because schema accepts null from DB but form expects string | undefined
+  // The schema transform will handle the conversion
+  const form = useForm({
     resolver: zodResolver(eventSchema),
-    defaultValues: normalizedDefaults,
+    defaultValues: normalizedDefaults as any,
   })
 
-  const handleSubmit = (data: EventFormData) => {
+  const handleSubmit = (data: any) => {
     startTransition(async () => {
-      // Transform empty strings to undefined for optional fields
-      const formData: EventFormData = {
-        ...data,
-        description: data.description && data.description.trim() ? data.description : undefined,
-        location: data.location && data.location.trim() ? data.location : undefined,
-      }
-      
-      const result = await onSubmit(formData)
+      // The schema transform handles:
+      // - null/undefined → undefined
+      // - empty strings → undefined  
+      // - whitespace-only strings → undefined
+      // - valid strings → trimmed strings
+      // So we can pass data directly - the transform in the schema will handle it
+      const result = await onSubmit(data as EventFormData)
       if (result.ok) {
         toast.success(submitLabel.includes('Update') ? 'Event updated successfully' : 'Event created successfully')
         router.push('/dashboard')
@@ -181,7 +182,7 @@ export function EventForm({ defaultValues, onSubmit, submitLabel = 'Create Event
                 <VenueMultiInput
                   value={field.value}
                   onChange={field.onChange}
-                  error={form.formState.errors.venueNames?.message}
+                  error={form.formState.errors.venueNames?.message as string | undefined}
                 />
               </FormControl>
               <FormDescription>Add at least one venue for this event</FormDescription>
