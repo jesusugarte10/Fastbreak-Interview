@@ -62,22 +62,32 @@ export async function signOutAction() {
 }
 
 export async function signInWithGoogleAction() {
-  const supabase = await createClient()
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-    },
-  })
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      },
+    })
 
-  if (error) {
-    return { ok: false, error: error.message }
+    if (error) {
+      return { ok: false, error: error.message }
+    }
+
+    if (data.url) {
+      return { ok: true, url: data.url }
+    }
+
+    return { ok: false, error: 'No redirect URL received from Google OAuth' }
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : 'Google sign-in failed. Please check provider configuration.',
+    }
   }
-
-  if (data.url) {
-    return { ok: true, url: data.url }
-  }
-
-  return { ok: false, error: 'No redirect URL received from OAuth provider' }
 }
 

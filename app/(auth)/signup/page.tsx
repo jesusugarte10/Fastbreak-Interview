@@ -28,12 +28,18 @@ export default function SignUpPage() {
 
   const handleGoogleSignIn = () => {
     startTransition(async () => {
-      const result = await signInWithGoogleAction()
-      if (result.ok && result.url) {
-        // Redirect using window.location for OAuth flow
-        window.location.href = result.url
-      } else {
-        toast.error(result.error || 'Failed to sign in with Google')
+      try {
+        const result = await signInWithGoogleAction()
+        if (result.ok && result.url) {
+          // Redirect using window.location for OAuth flow
+          window.location.href = result.url
+        } else {
+          toast.error(result.error || 'Failed to sign in with Google')
+        }
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'Failed to sign in with Google'
+        toast.error(message)
       }
     })
   }
