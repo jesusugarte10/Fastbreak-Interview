@@ -168,6 +168,11 @@ export function AIEventCreator() {
       return
     }
 
+    // Ensure at least one venue is provided
+    const venueNames = extractedEvent.venueNames && extractedEvent.venueNames.length > 0
+      ? extractedEvent.venueNames
+      : ['Main Venue'] // Default venue if none provided
+
     setIsProcessing(true)
     try {
       const { createEventAction } = await import('@/lib/actions/events')
@@ -177,9 +182,9 @@ export function AIEventCreator() {
         name: extractedEvent.name,
         sport: extractedEvent.sport,
         dateTime: extractedEvent.dateTime,
-        description: extractedEvent.description,
-        location: extractedEvent.location,
-        venueNames: extractedEvent.venueNames || [],
+        description: extractedEvent.description || undefined,
+        location: extractedEvent.location || undefined,
+        venueNames: venueNames,
       }
 
       const result = await createEventAction(formData)

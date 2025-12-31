@@ -49,77 +49,47 @@ export function EventForm({ defaultValues, onSubmit, submitLabel = 'Create Event
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
   
-  // Convert ISO datetime to datetime-local format if present
-  // This ensures datetime-local inputs receive the correct format (YYYY-MM-DDTHH:mm)
-  // instead of ISO strings (YYYY-MM-DDTHH:mm:ssZ) which they cannot parse
-  const convertedDefaultValues = React.useMemo(() => {
-    const baseDefaults = {
+  // Normalize defaultValues to handle null values from database
+  const normalizedDefaults = React.useMemo(() => {
+    const base = {
       name: '',
       sport: '',
       dateTime: '',
       description: '',
-      venueNames: [],
+      location: '',
+      venueNames: [] as string[],
     }
     
-    if (!defaultValues) {
-      return baseDefaults
-    }
+    if (!defaultValues) return base
     
-    // Create a new object with all defaultValues, ensuring we don't mutate the original
-    const converted: Partial<EventFormData> = {
-      ...baseDefaults,
+    return {
+      ...base,
       ...defaultValues,
+      // Convert null to empty string for form inputs
+      description: defaultValues.description ?? '',
+      location: defaultValues.location ?? '',
+      // Ensure venueNames is always an array
+      venueNames: defaultValues.venueNames && defaultValues.venueNames.length > 0 
+        ? defaultValues.venueNames 
+        : [],
     }
-    
-    // Convert ISO datetime string to datetime-local format (YYYY-MM-DDTHH:mm)
-    // This is critical because HTML datetime-local inputs cannot parse ISO strings with timezone
-    if (converted.dateTime && typeof converted.dateTime === 'string') {
-      try {
-        // Check if it's already in datetime-local format (no timezone, no seconds)
-        const isAlreadyLocalFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(converted.dateTime)
-        
-        if (!isAlreadyLocalFormat) {
-          // Parse the ISO string and convert to local time
-          const date = new Date(converted.dateTime)
-          
-          if (!isNaN(date.getTime())) {
-            // Format as YYYY-MM-DDTHH:mm (datetime-local format)
-            // Use local time components to ensure correct display in datetime-local input
-            const year = date.getFullYear()
-            const month = String(date.getMonth() + 1).padStart(2, '0')
-            const day = String(date.getDate()).padStart(2, '0')
-            const hours = String(date.getHours()).padStart(2, '0')
-            const minutes = String(date.getMinutes()).padStart(2, '0')
-            
-            // Explicitly set the converted value - this will NOT be overridden
-            converted.dateTime = `${year}-${month}-${day}T${hours}:${minutes}`
-          } else {
-            // Invalid date, clear it
-            converted.dateTime = ''
-          }
-        }
-        // If already in correct format, keep it as-is
-      } catch (error) {
-        // If conversion fails, clear the value to avoid showing invalid data
-        console.error('Failed to convert datetime:', error)
-        converted.dateTime = ''
-      }
-    } else if (converted.dateTime === null || converted.dateTime === undefined) {
-      // Ensure empty string for null/undefined
-      converted.dateTime = ''
-    }
-    
-    return converted
   }, [defaultValues])
   
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
-    defaultValues: convertedDefaultValues,
+    defaultValues: normalizedDefaults,
   })
 
   const handleSubmit = (data: EventFormData) => {
     startTransition(async () => {
-      const result = await onSubmit(data)
+      // Transform empty strings to undefined for optional fields
+      const formData: EventFormData = {
+        ...data,
+        description: data.description && data.description.trim() ? data.description : undefined,
+        location: data.location && data.location.trim() ? data.location : undefined,
+      }
+      
+      const result = await onSubmit(formData)
       if (result.ok) {
         toast.success(submitLabel.includes('Update') ? 'Event updated successfully' : 'Event created successfully')
         router.push('/dashboard')
