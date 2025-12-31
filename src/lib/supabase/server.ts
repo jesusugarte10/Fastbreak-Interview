@@ -34,10 +34,23 @@ export async function createClient() {
 }
 
 export async function getUser() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  return user
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser()
+    
+    // If there's an auth error (like invalid refresh token), just return null
+    // This is expected when session expires or cookies are stale
+    if (error) {
+      return null
+    }
+    
+    return user
+  } catch (error) {
+    // Catch any unexpected errors and return null (treat as unauthenticated)
+    return null
+  }
 }
 
