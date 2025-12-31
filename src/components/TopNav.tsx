@@ -21,7 +21,7 @@ export function TopNav() {
           <h1 className="text-xl font-bold tracking-tight text-cyan-400">
             Fastbreak
           </h1>
-          <span className="text-sm text-cyan-300">Events</span>
+          <span className="text-xl font-bold tracking-tight text-cyan-300">Events</span>
         </div>
         <Button
           variant="outline"

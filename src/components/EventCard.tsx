@@ -1,5 +1,6 @@
 'use client'
 
+import * as React from 'react'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -24,7 +25,23 @@ type EventCardProps = {
 }
 
 export function EventCard({ id, name, sport, startsAt, description, location, venues }: EventCardProps) {
-  const isUpcoming = new Date(startsAt) > new Date()
+  // Use useMemo to prevent hydration mismatches from Date comparisons
+  const isUpcoming = React.useMemo(() => {
+    try {
+      return new Date(startsAt) > new Date()
+    } catch {
+      return false
+    }
+  }, [startsAt])
+  
+  // Format date safely to prevent hydration mismatches
+  const formattedDate = React.useMemo(() => {
+    try {
+      return format(new Date(startsAt), 'PPP p')
+    } catch {
+      return startsAt
+    }
+  }, [startsAt])
   
   return (
     <Card className="group hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 border-primary/10 hover:border-primary/30 bg-gradient-to-br from-card to-card/50">
@@ -36,7 +53,7 @@ export function EventCard({ id, name, sport, startsAt, description, location, ve
             </CardTitle>
             <CardDescription className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate">{format(new Date(startsAt), 'PPP p')}</span>
+              <span className="truncate">{formattedDate}</span>
             </CardDescription>
           </div>
           <Badge 

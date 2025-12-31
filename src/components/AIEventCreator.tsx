@@ -362,7 +362,15 @@ export function AIEventCreator() {
                     {extractedEvent.dateTime && (
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Calendar className="h-4 w-4 text-primary" />
-                        <span>{format(new Date(extractedEvent.dateTime), 'PPP p')}</span>
+                        <span>
+                          {React.useMemo(() => {
+                            try {
+                              return format(new Date(extractedEvent.dateTime!), 'PPP p')
+                            } catch {
+                              return extractedEvent.dateTime
+                            }
+                          }, [extractedEvent.dateTime])}
+                        </span>
                       </div>
                     )}
                     {extractedEvent.location && (
