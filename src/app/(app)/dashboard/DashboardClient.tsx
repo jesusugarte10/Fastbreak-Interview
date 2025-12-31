@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Search, Calendar } from 'lucide-react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useTransition, useState, useEffect, useRef } from 'react'
 
 type DashboardClientProps = {
@@ -35,7 +35,6 @@ export function DashboardClient({
   sports 
 }: DashboardClientProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
   const [searchValue, setSearchValue] = useState(initialSearch || '')
   const debounceRef = useRef<NodeJS.Timeout | null>(null)
@@ -50,7 +49,6 @@ export function DashboardClient({
     // Set a new timeout to update the URL
     debounceRef.current = setTimeout(() => {
       // Use window.location.search to get fresh params at execution time
-      // This avoids depending on searchParams which creates a new object reference on every render
       const params = new URLSearchParams(window.location.search)
       const currentSearch = params.get('search') || ''
       
@@ -75,12 +73,30 @@ export function DashboardClient({
   }, [searchValue, router])
 
   const handleFilterChange = (key: string, value: string, defaultValue: string) => {
-    const params = new URLSearchParams(searchParams.toString())
+    // Cancel any pending debounced search since we're navigating now
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+      debounceRef.current = null
+    }
+    
+    // Use fresh URL params and merge with the current searchValue state
+    // This ensures unsaved search text isn't lost when changing filters
+    const params = new URLSearchParams(window.location.search)
+    
+    // Include the current searchValue (which may not be in the URL yet due to debounce)
+    if (searchValue) {
+      params.set('search', searchValue)
+    } else {
+      params.delete('search')
+    }
+    
+    // Apply the filter change
     if (value && value !== defaultValue) {
       params.set(key, value)
     } else {
       params.delete(key)
     }
+    
     startTransition(() => {
       router.push(`/dashboard?${params.toString()}`)
     })
