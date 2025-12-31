@@ -4,13 +4,19 @@ import { Button } from '@/components/ui/button'
 import { signOutAction } from '@/lib/actions/auth'
 import { LogOut } from 'lucide-react'
 import { useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 
 export function TopNav() {
   const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
   const handleSignOut = () => {
     startTransition(async () => {
-      await signOutAction()
+      const result = await signOutAction()
+      if (result.ok) {
+        router.push('/login')
+        router.refresh()
+      }
     })
   }
 

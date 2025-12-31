@@ -48,3 +48,4 @@ echo "2. Make sure your app is running: npm run dev"
 echo "3. Run tests: source venv/bin/activate && pytest"
 echo ""
 
+

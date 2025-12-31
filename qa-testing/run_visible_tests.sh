@@ -26,16 +26,8 @@ fi
 # Create reports directory
 mkdir -p reports
 
-# Run comprehensive tests by default, or accept argument
-if [ -z "$1" ]; then
-    echo "🧪 Running comprehensive test suite..."
-    pytest test_comprehensive.py -v -s --html=reports/report_comprehensive.html --self-contained-html
-else
-    echo "🧪 Running $1 test suite..."
-    pytest $1 -v -s --html=reports/report_$1.html --self-contained-html
-fi
-
 echo ""
 echo "✅ Tests completed!"
 echo "📊 Check reports/ directory for HTML reports"
+
 

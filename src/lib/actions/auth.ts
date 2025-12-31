@@ -54,7 +54,7 @@ export async function signInAction(formData: FormData) {
     }
 
     const supabase = await createClient()
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error, data } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
@@ -81,7 +81,8 @@ export async function signInAction(formData: FormData) {
     }
 
     revalidatePath('/', 'layout')
-    redirect('/dashboard')
+    // Return success instead of redirecting - let client handle navigation
+    return data
   })
 }
 
@@ -114,7 +115,8 @@ export async function signOutAction() {
     if (error) throw error
 
     revalidatePath('/', 'layout')
-    redirect('/login')
+    // Return success instead of redirecting - let client handle navigation
+    return { success: true }
   })
 }
 

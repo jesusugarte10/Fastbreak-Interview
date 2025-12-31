@@ -184,3 +184,4 @@ All test suites are configured and ready to run. The tests will:
 
 **Note:** Some tests require a test user to be set up in Supabase with credentials in `.env`.
 
+

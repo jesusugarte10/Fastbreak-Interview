@@ -112,18 +112,31 @@ class TestEventCreation:
         time.sleep(0.5)  # Visual pause
         print(f"  ✓ Date set: {tomorrow}")
         
-        # Step 5: Fill description
+        # Step 5: Fill description (optional field)
         print("  → Adding description...")
-        description_input = driver.find_element(By.NAME, "description")
-        description_input.clear()
+        description_input = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, "description"))
+        )
+        # For React-controlled inputs, click first, then use keyboard shortcuts to clear
+        description_input.click()
+        time.sleep(0.2)  # Brief pause for focus
+        # Select all and delete (works better than .clear() for React inputs)
+        description_input.send_keys(Keys.COMMAND + "a" if platform.system() == 'Darwin' else Keys.CONTROL + "a")
+        description_input.send_keys(Keys.DELETE)
         description_input.send_keys("This is a comprehensive test event with all fields filled out.")
         time.sleep(0.5)  # Visual pause
         print("  ✓ Description added")
         
-        # Step 6: Fill location
+        # Step 6: Fill location (optional field)
         print("  → Adding location...")
-        location_input = driver.find_element(By.NAME, "location")
-        location_input.clear()
+        location_input = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, "location"))
+        )
+        # Use the same reliable method
+        location_input.click()
+        time.sleep(0.2)  # Brief pause for focus
+        location_input.send_keys(Keys.COMMAND + "a" if platform.system() == 'Darwin' else Keys.CONTROL + "a")
+        location_input.send_keys(Keys.DELETE)
         location_input.send_keys("Test Location, Test City")
         time.sleep(0.5)  # Visual pause
         print("  ✓ Location added")

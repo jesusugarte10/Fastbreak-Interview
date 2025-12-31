@@ -9,6 +9,17 @@ export async function safeAction<T>(
     const data = await action()
     return { ok: true, data }
   } catch (error) {
+    // Re-throw Next.js redirect errors - they should not be caught
+    if (
+      error &&
+      typeof error === 'object' &&
+      'digest' in error &&
+      typeof (error as { digest: string }).digest === 'string' &&
+      (error as { digest: string }).digest.startsWith('NEXT_REDIRECT')
+    ) {
+      throw error
+    }
+    
     // Handle Supabase errors
     if (error && typeof error === 'object' && 'message' in error) {
       const errorMessage = (error as { message: string }).message
