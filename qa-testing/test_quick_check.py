@@ -31,7 +31,6 @@ def test_selenium_setup(driver, base_url):
         print(f"✅ Current URL: {current_url}")
         
         print("\n✅ Selenium setup is working correctly!")
-        return True
         
     except Exception as e:
         print(f"\n❌ Selenium setup test failed: {str(e)}")

@@ -31,8 +31,35 @@ def driver():
     options.add_argument("--disable-gpu")
     options.add_argument("--window-size=1920,1080")
     
+    # Fix for webdriver-manager issue - find the actual chromedriver executable
+    driver_path = ChromeDriverManager().install()
+    
+    # webdriver-manager sometimes returns the wrong file (e.g., THIRD_PARTY_NOTICES.chromedriver)
+    # We need to find the actual chromedriver executable
+    if not driver_path.endswith('chromedriver') or 'THIRD_PARTY' in driver_path or 'LICENSE' in driver_path:
+        # Get the directory containing the driver
+        driver_dir = os.path.dirname(driver_path) if os.path.isfile(driver_path) else driver_path
+        
+        # Look for the actual chromedriver executable (just "chromedriver", not other files)
+        if os.path.isdir(driver_dir):
+            chromedriver_path = os.path.join(driver_dir, 'chromedriver')
+            if os.path.isfile(chromedriver_path):
+                driver_path = chromedriver_path
+            else:
+                # Fallback: search for any file named exactly "chromedriver"
+                for file in os.listdir(driver_dir):
+                    if file == 'chromedriver':
+                        potential_path = os.path.join(driver_dir, file)
+                        if os.path.isfile(potential_path):
+                            driver_path = potential_path
+                            break
+    
+    # Make sure the driver is executable
+    if os.path.isfile(driver_path):
+        os.chmod(driver_path, 0o755)
+    
     driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()), options=options
+        service=Service(driver_path), options=options
     )
     driver.implicitly_wait(10)
     driver.set_page_load_timeout(30)
