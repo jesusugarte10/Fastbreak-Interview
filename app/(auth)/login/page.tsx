@@ -33,7 +33,10 @@ export default function LoginPage() {
   const handleGoogleSignIn = () => {
     startTransition(async () => {
       const result = await signInWithGoogleAction()
-      if (!result.ok) {
+      if (result.ok && result.url) {
+        // Redirect using window.location for OAuth flow
+        window.location.href = result.url
+      } else {
         toast.error(result.error || 'Failed to sign in with Google')
       }
     })

@@ -62,19 +62,22 @@ export async function signOutAction() {
 }
 
 export async function signInWithGoogleAction() {
-  return safeAction(async () => {
-    const supabase = await createClient()
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-      },
-    })
-
-    if (error) throw error
-    if (data.url) {
-      redirect(data.url)
-    }
+  const supabase = await createClient()
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+    },
   })
+
+  if (error) {
+    return { ok: false, error: error.message }
+  }
+
+  if (data.url) {
+    return { ok: true, url: data.url }
+  }
+
+  return { ok: false, error: 'No redirect URL received from OAuth provider' }
 }
 
