@@ -43,30 +43,51 @@ export async function listEventsAction(search?: string, sport?: string, dateFilt
       query = query.eq('sport', sport)
     }
 
-    // Date filtering
+    // Date filtering - use consistent UTC-based date boundaries
+    // This ensures predictable behavior regardless of server timezone
     if (dateFilter && dateFilter !== 'all') {
       const now = new Date()
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1)
+      
+      // Helper to create start of day in UTC (00:00:00.000 UTC)
+      const getStartOfDayUTC = (date: Date) => {
+        return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0))
+      }
+      
+      // Helper to create end of day in UTC (23:59:59.999 UTC)
+      const getEndOfDayUTC = (date: Date) => {
+        return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 23, 59, 59, 999))
+      }
       
       switch (dateFilter) {
-        case 'today':
+        case 'today': {
+          const startOfDay = getStartOfDayUTC(now)
+          const endOfDay = getEndOfDayUTC(now)
           query = query
             .gte('starts_at', startOfDay.toISOString())
             .lte('starts_at', endOfDay.toISOString())
           break
+        }
         case 'week': {
-          const dayOfWeek = now.getDay()
-          const startOfWeek = new Date(startOfDay.getTime() - dayOfWeek * 24 * 60 * 60 * 1000)
-          const endOfWeek = new Date(startOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000 - 1)
+          // Get start of current week (Sunday) in UTC
+          const dayOfWeek = now.getUTCDay()
+          const startOfWeekDate = new Date(now)
+          startOfWeekDate.setUTCDate(now.getUTCDate() - dayOfWeek)
+          const startOfWeek = getStartOfDayUTC(startOfWeekDate)
+          
+          // Get end of current week (Saturday) in UTC
+          const endOfWeekDate = new Date(startOfWeekDate)
+          endOfWeekDate.setUTCDate(startOfWeekDate.getUTCDate() + 6)
+          const endOfWeek = getEndOfDayUTC(endOfWeekDate)
+          
           query = query
             .gte('starts_at', startOfWeek.toISOString())
             .lte('starts_at', endOfWeek.toISOString())
           break
         }
         case 'month': {
-          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-          const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+          const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0))
+          // Day 0 of next month = last day of current month
+          const endOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999))
           query = query
             .gte('starts_at', startOfMonth.toISOString())
             .lte('starts_at', endOfMonth.toISOString())

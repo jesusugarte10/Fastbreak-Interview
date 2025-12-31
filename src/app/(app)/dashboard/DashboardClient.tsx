@@ -94,6 +94,7 @@ export function DashboardClient({
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           className="pl-9"
+          disabled={isPending}
         />
       </div>
 
