@@ -42,6 +42,7 @@ const SPORTS = [
   'Tennis',
   'Volleyball',
   'Hockey',
+  'Pickleball',
   'Other',
 ]
 
@@ -166,6 +167,20 @@ export function EventForm({ defaultValues, onSubmit, submitLabel = 'Create Event
               <FormLabel>Description (Optional)</FormLabel>
               <FormControl>
                 <Input placeholder="Event description..." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="location"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Location (Optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="Event location..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

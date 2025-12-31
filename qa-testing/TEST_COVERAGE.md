@@ -10,8 +10,8 @@ The Selenium test suite now covers all basic functionality with **visible browse
 **Complete coverage of all basic functionality:**
 
 #### TestCompleteUserJourney
-- ✅ `test_complete_signup_and_first_event` - Full signup flow
-- ✅ `test_complete_login_flow` - Complete login with verification
+- ✅ `test_complete_login_flow` - Complete login flow using existing test account
+- ⚠️ Signup tests removed - uses existing test account from `.env` file
 
 #### TestEventCreation
 - ✅ `test_create_event_with_all_fields` - Creates event with:

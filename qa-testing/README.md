@@ -160,14 +160,15 @@ HEADLESS=false pytest -v
 
 ### test_comprehensive.py (NEW - Recommended!)
 **Comprehensive test suite covering all basic functionality:**
-- ✅ Complete signup flow
-- ✅ Complete login flow
+- ✅ Complete login flow (uses existing test account from `.env`)
 - ✅ Create event with all fields (name, sport, date, description, location, venues)
 - ✅ Edit existing event
 - ✅ Delete event
 - ✅ AI event creator button and dialog
 - ✅ Dashboard navigation
 - ✅ Sign out functionality
+
+**Note:** Tests use the existing test account configured in `.env` file. No new accounts are created during testing.
 
 **This is the recommended test suite to run for full coverage!**
 

@@ -13,43 +13,10 @@ import time
 
 
 class TestCompleteUserJourney:
-    """Complete user journey tests - sign up, login, create, edit, delete"""
+    """Complete user journey tests - login, create, edit, delete (using existing test account)"""
+    
+    # Note: We use the existing test account from .env, not creating new accounts
 
-    def test_complete_signup_and_first_event(self, driver, base_url, test_credentials):
-        """Test complete signup flow and creating first event"""
-        print("\n🔵 Starting: Complete Signup and First Event Test")
-        
-        # Step 1: Go to signup page
-        print("  → Navigating to signup page...")
-        driver.get(f"{base_url}/signup")
-        time.sleep(1)  # Visual pause
-        
-        # Verify signup page
-        assert "Create an account" in driver.page_source
-        print("  ✓ Signup page loaded")
-        
-        # Step 2: Fill signup form
-        print("  → Filling signup form...")
-        email_input = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.NAME, "email"))
-        )
-        email_input.clear()
-        email_input.send_keys(test_credentials["email"])
-        time.sleep(0.5)  # Visual pause
-        
-        password_input = driver.find_element(By.NAME, "password")
-        password_input.clear()
-        password_input.send_keys(test_credentials["password"])
-        time.sleep(0.5)  # Visual pause
-        
-        # Step 3: Submit signup
-        print("  → Submitting signup form...")
-        signup_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Sign Up')]")
-        signup_button.click()
-        time.sleep(2)  # Wait for response
-        
-        print("  ✓ Signup submitted (check email for verification)")
-        
     def test_complete_login_flow(self, driver, base_url, test_credentials):
         """Test complete login flow"""
         print("\n🔵 Starting: Complete Login Flow Test")
