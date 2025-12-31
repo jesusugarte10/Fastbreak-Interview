@@ -1,0 +1,287 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import { getUser } from '@/lib/supabase/server'
+import { safeAction } from './safe-action'
+import { eventSchema, type EventFormData } from '@/lib/validators/event'
+import { revalidatePath } from 'next/cache'
+
+export async function listEventsAction(search?: string, sport?: string) {
+  return safeAction(async () => {
+    const user = await getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+    let query = supabase
+      .from('events')
+      .select(`
+        id,
+        name,
+        sport,
+        starts_at,
+        description,
+        created_at,
+        event_venues (
+          venue:venues (
+            id,
+            name
+          )
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('starts_at', { ascending: true })
+
+    if (search) {
+      query = query.ilike('name', `%${search}%`)
+    }
+
+    if (sport) {
+      query = query.eq('sport', sport)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+
+    return data.map((event) => ({
+      id: event.id,
+      name: event.name,
+      sport: event.sport,
+      startsAt: event.starts_at,
+      description: event.description,
+      createdAt: event.created_at,
+      venues: (event.event_venues as any[])?.map((ev) => ev.venue) || [],
+    }))
+  })
+}
+
+export async function createEventAction(formData: EventFormData) {
+  return safeAction(async () => {
+    const user = await getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const validated = eventSchema.parse(formData)
+    const supabase = await createClient()
+
+    // Create event
+    const { data: event, error: eventError } = await supabase
+      .from('events')
+      .insert({
+        user_id: user.id,
+        name: validated.name,
+        sport: validated.sport,
+        starts_at: validated.dateTime,
+        description: validated.description || null,
+      })
+      .select()
+      .single()
+
+    if (eventError) throw eventError
+
+    // Get or create venues
+    const venueIds: string[] = []
+    for (const venueName of validated.venueNames) {
+      // Try to get existing venue
+      const { data: existingVenue } = await supabase
+        .from('venues')
+        .select('id')
+        .eq('name', venueName)
+        .single()
+
+      let venueId: string
+      if (existingVenue) {
+        venueId = existingVenue.id
+      } else {
+        // Create new venue
+        const { data: newVenue, error: venueError } = await supabase
+          .from('venues')
+          .insert({ name: venueName })
+          .select()
+          .single()
+
+        if (venueError) throw venueError
+        venueId = newVenue.id
+      }
+
+      venueIds.push(venueId)
+    }
+
+    // Link venues to event
+    const { error: linkError } = await supabase
+      .from('event_venues')
+      .insert(
+        venueIds.map((venueId) => ({
+          event_id: event.id,
+          venue_id: venueId,
+        }))
+      )
+
+    if (linkError) throw linkError
+
+    revalidatePath('/dashboard')
+    return event
+  })
+}
+
+export async function updateEventAction(id: string, formData: EventFormData) {
+  return safeAction(async () => {
+    const user = await getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const validated = eventSchema.parse(formData)
+    const supabase = await createClient()
+
+    // Verify ownership
+    const { data: existingEvent, error: checkError } = await supabase
+      .from('events')
+      .select('id')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (checkError || !existingEvent) {
+      throw new Error('Event not found or unauthorized')
+    }
+
+    // Update event
+    const { error: eventError } = await supabase
+      .from('events')
+      .update({
+        name: validated.name,
+        sport: validated.sport,
+        starts_at: validated.dateTime,
+        description: validated.description || null,
+      })
+      .eq('id', id)
+
+    if (eventError) throw eventError
+
+    // Delete existing venue links
+    const { error: deleteError } = await supabase
+      .from('event_venues')
+      .delete()
+      .eq('event_id', id)
+
+    if (deleteError) throw deleteError
+
+    // Get or create venues
+    const venueIds: string[] = []
+    for (const venueName of validated.venueNames) {
+      const { data: existingVenue } = await supabase
+        .from('venues')
+        .select('id')
+        .eq('name', venueName)
+        .single()
+
+      let venueId: string
+      if (existingVenue) {
+        venueId = existingVenue.id
+      } else {
+        const { data: newVenue, error: venueError } = await supabase
+          .from('venues')
+          .insert({ name: venueName })
+          .select()
+          .single()
+
+        if (venueError) throw venueError
+        venueId = newVenue.id
+      }
+
+      venueIds.push(venueId)
+    }
+
+    // Link venues to event
+    const { error: linkError } = await supabase
+      .from('event_venues')
+      .insert(
+        venueIds.map((venueId) => ({
+          event_id: id,
+          venue_id: venueId,
+        }))
+      )
+
+    if (linkError) throw linkError
+
+    revalidatePath('/dashboard')
+    revalidatePath(`/events/${id}/edit`)
+  })
+}
+
+export async function deleteEventAction(id: string) {
+  return safeAction(async () => {
+    const user = await getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+
+    // Verify ownership
+    const { data: existingEvent, error: checkError } = await supabase
+      .from('events')
+      .select('id')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (checkError || !existingEvent) {
+      throw new Error('Event not found or unauthorized')
+    }
+
+    // Delete venue links (cascade should handle this, but being explicit)
+    const { error: linkError } = await supabase
+      .from('event_venues')
+      .delete()
+      .eq('event_id', id)
+
+    if (linkError) throw linkError
+
+    // Delete event
+    const { error: eventError } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', id)
+
+    if (eventError) throw eventError
+
+    revalidatePath('/dashboard')
+  })
+}
+
+export async function getEventAction(id: string) {
+  return safeAction(async () => {
+    const user = await getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('events')
+      .select(`
+        id,
+        name,
+        sport,
+        starts_at,
+        description,
+        event_venues (
+          venue:venues (
+            id,
+            name
+          )
+        )
+      `)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (error) throw error
+    if (!data) throw new Error('Event not found')
+
+    return {
+      id: data.id,
+      name: data.name,
+      sport: data.sport,
+      dateTime: data.starts_at,
+      description: data.description || '',
+      venueNames: (data.event_venues as any[])?.map((ev) => ev.venue.name) || [],
+    }
+  })
+}
+

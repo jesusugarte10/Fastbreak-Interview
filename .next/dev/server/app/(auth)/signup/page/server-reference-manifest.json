@@ -1,0 +1,35 @@
+{
+  "node": {
+    "408eea4d9d42a2375e6f5f17430ccfc3c4ba2ba6a5": {
+      "workers": {
+        "app/(auth)/signup/page": {
+          "moduleId": "[project]/.next-internal/server/app/(auth)/signup/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/lib/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "signUpAction",
+          "filename": "src/lib/actions/auth.ts"
+        }
+      },
+      "layer": {
+        "app/(auth)/signup/page": "action-browser"
+      },
+      "exportedName": "signUpAction",
+      "filename": "src/lib/actions/auth.ts"
+    },
+    "00695fb19804c069322da285930abcb17b476d01ee": {
+      "workers": {
+        "app/(auth)/signup/page": {
+          "moduleId": "[project]/.next-internal/server/app/(auth)/signup/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/lib/actions/auth.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "signInWithGoogleAction",
+          "filename": "src/lib/actions/auth.ts"
+        }
+      },
+      "layer": {
+        "app/(auth)/signup/page": "action-browser"
+      },
+      "exportedName": "signInWithGoogleAction",
+      "filename": "src/lib/actions/auth.ts"
+    }
+  },
+  "edge": {}
+}

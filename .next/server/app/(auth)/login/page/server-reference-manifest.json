@@ -1,0 +1,35 @@
+{
+  "node": {
+    "40c9d3200cc93c18085b6df3c244b57fd573b6532e": {
+      "workers": {
+        "app/(auth)/login/page": {
+          "moduleId": 64033,
+          "async": false,
+          "exportedName": "signInAction",
+          "filename": "src/lib/actions/auth.ts"
+        }
+      },
+      "layer": {
+        "app/(auth)/login/page": "action-browser"
+      },
+      "exportedName": "signInAction",
+      "filename": "src/lib/actions/auth.ts"
+    },
+    "006e07495c28c5112ac9c20c74fc4e45e8fe371a7e": {
+      "workers": {
+        "app/(auth)/login/page": {
+          "moduleId": 64033,
+          "async": false,
+          "exportedName": "signInWithGoogleAction",
+          "filename": "src/lib/actions/auth.ts"
+        }
+      },
+      "layer": {
+        "app/(auth)/login/page": "action-browser"
+      },
+      "exportedName": "signInWithGoogleAction",
+      "filename": "src/lib/actions/auth.ts"
+    }
+  },
+  "edge": {}
+}

@@ -1,0 +1,12 @@
+{
+  "/(app)/dashboard/page": "/dashboard",
+  "/(app)/events/[id]/edit/page": "/events/[id]/edit",
+  "/(app)/events/new/page": "/events/new",
+  "/(auth)/login/page": "/login",
+  "/(auth)/signup/page": "/signup",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/auth/callback/route": "/auth/callback",
+  "/favicon.ico/route": "/favicon.ico",
+  "/page": "/"
+}
