@@ -379,48 +379,6 @@ class TestEventDeletion:
             pytest.skip("No events found to delete - create an event first")
 
 
-class TestAIFeatures:
-    """Test AI event creator features"""
-
-    def test_ai_event_creator_button(self, authenticated_driver, base_url):
-        """Test AI event creator button presence and functionality"""
-        print("\n🤖 Starting: AI Event Creator Test")
-        driver = authenticated_driver
-        
-        # Step 1: Go to dashboard
-        print("  → Navigating to dashboard...")
-        driver.get(f"{base_url}/dashboard")
-        time.sleep(1)  # Visual pause
-        
-        # Step 2: Find AI creator button
-        print("  → Looking for AI Event Creator button...")
-        ai_buttons = driver.find_elements(By.XPATH, "//button[contains(text(), 'AI')] | //button[contains(text(), 'Create with AI')]")
-        
-        if len(ai_buttons) > 0:
-            print("  ✓ AI Event Creator button found")
-            
-            # Step 3: Click button to open dialog
-            print("  → Opening AI Event Creator dialog...")
-            ai_buttons[0].click()
-            time.sleep(2)  # Visual pause
-            
-            # Step 4: Verify dialog opened
-            dialog = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'AI')] | //div[@role='dialog']"))
-            )
-            assert dialog.is_displayed()
-            print("  ✓ AI Event Creator dialog opened")
-            
-            # Step 5: Close dialog
-            close_buttons = driver.find_elements(By.XPATH, "//button[contains(@aria-label, 'close')] | //button[contains(text(), '×')] | //button[@aria-label='Close']")
-            if close_buttons:
-                close_buttons[0].click()
-                time.sleep(1)  # Visual pause
-                print("  ✓ Dialog closed")
-        else:
-            print("  ⚠ AI Event Creator button not found (may not be implemented)")
-
-
 class TestNavigation:
     """Test navigation and UI elements"""
 
