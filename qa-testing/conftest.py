@@ -10,9 +10,45 @@ from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 from dotenv import load_dotenv
 import time
+
+
+def save_debug_artifacts(driver, prefix="test-failure"):
+    """
+    Save debugging artifacts (screenshot and page source) when a test fails.
+    Useful for debugging CI failures and timing issues.
+    """
+    try:
+        ts = int(time.time())
+        # Use reports directory if it exists, otherwise use /tmp
+        reports_dir = Path(__file__).parent / "reports"
+        if not reports_dir.exists():
+            reports_dir.mkdir(parents=True, exist_ok=True)
+        
+        screenshot_path = reports_dir / f"{prefix}-{ts}.png"
+        html_path = reports_dir / f"{prefix}-{ts}.html"
+        
+        try:
+            driver.save_screenshot(str(screenshot_path))
+            print(f"📸 Screenshot saved: {screenshot_path}")
+        except Exception as e:
+            print(f"⚠️ Could not save screenshot: {e}")
+        
+        try:
+            with open(html_path, "w", encoding="utf-8") as f:
+                f.write(driver.page_source)
+            print(f"📄 Page source saved: {html_path}")
+        except Exception as e:
+            print(f"⚠️ Could not save page source: {e}")
+        
+        print(f"🔍 Debug artifacts saved with prefix: {prefix}")
+        print(f"   Current URL: {driver.current_url}")
+        print(f"   Page title: {driver.title}")
+    except Exception as e:
+        print(f"⚠️ Error saving debug artifacts: {e}")
 
 # Load environment variables from .env file
 env_path = Path(__file__).parent / '.env'
